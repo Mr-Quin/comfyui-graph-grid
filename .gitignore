@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+docs/src/demo/*.png
+.venv/
+uv.lock

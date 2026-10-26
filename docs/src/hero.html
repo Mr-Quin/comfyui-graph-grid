@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=block" rel="stylesheet">
+<style>
+  :root { --a1: #67e8f9; --a2: #818cf8; --a3: #a78bfa; --card: #1d2027; --line: #2c3039; --muted: #8b93a3; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1764px; height: 756px; background: transparent; }
+  .frame { position: relative; width: 1764px; height: 756px; border-radius: 36px; overflow: hidden;
+    background:
+      radial-gradient(900px 520px at 18% 30%, rgba(103, 232, 249, .10), transparent 70%),
+      radial-gradient(700px 500px at 85% 90%, rgba(167, 139, 250, .10), transparent 70%),
+      radial-gradient(circle, rgba(255,255,255,.07) 1.2px, transparent 1.6px) 0 0 / 28px 28px,
+      #14161b;
+    font-family: Inter, sans-serif; color: #f3f4f6; }
+  .word { position: absolute; left: 86px; top: 92px; font-family: Fredoka, sans-serif; font-weight: 700;
+    font-size: 154px; line-height: .86; letter-spacing: 2px;
+    background: linear-gradient(180deg, var(--a1) 0%, var(--a2) 55%, var(--a3) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 28px rgba(129, 140, 248, .35)); }
+  .headline { position: absolute; left: 88px; top: 418px; width: 720px; font-size: 41px; font-weight: 700; line-height: 1.32; }
+  .headline em { font-style: normal; background: linear-gradient(90deg, var(--a1), var(--a2));
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { position: absolute; left: 88px; top: 548px; width: 660px; font-size: 26px; line-height: 1.5; color: var(--muted); }
+  .chips { position: absolute; left: 88px; top: 664px; display: flex; gap: 16px; }
+  .chip { font-family: "JetBrains Mono", monospace; font-size: 22px; color: #a5b4fc; padding: 12px 22px;
+    border-radius: 12px; background: rgba(129, 140, 248, .10); border: 1px solid rgba(129, 140, 248, .28); }
+
+  .card { position: absolute; background: var(--card); border: 1px solid var(--line); border-radius: 26px;
+    box-shadow: 0 30px 60px rgba(0,0,0,.35); }
+  .node { left: 800px; top: 168px; width: 404px; padding: 26px 28px; }
+  .title { display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 700; }
+  .dot { width: 16px; height: 16px; border-radius: 50%; background: #34d399; box-shadow: 0 0 12px #34d399; }
+  .muted { color: var(--muted); font-size: 21px; font-weight: 400; margin: 6px 0 20px 30px; }
+  .btn { font-size: 21px; padding: 13px 18px; border-radius: 12px; background: #262a33; border: 1px solid var(--line);
+    text-align: center; margin-bottom: 18px; }
+  .axis { font-size: 18px; line-height: 1.55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .axis b { color: var(--a1); margin-right: 6px; }
+  .axis span { color: var(--muted); }
+  .prog { margin-top: 18px; display: flex; justify-content: space-between; font-size: 19px; color: var(--muted); }
+  .prog strong { color: #c7d2fe; font-weight: 600; }
+  .bar { margin-top: 10px; height: 10px; border-radius: 6px; background: #2a2e37; overflow: hidden; }
+  .bar div { width: 78%; height: 100%; background: linear-gradient(90deg, var(--a1), var(--a2)); }
+
+  .grid { left: 1252px; top: 98px; width: 452px; padding: 22px 22px 24px; }
+  .grid .head { display: grid; grid-template-columns: 84px repeat(3, 1fr); gap: 8px; font-size: 14px; color: var(--muted);
+    margin-bottom: 8px; font-family: "JetBrains Mono", monospace; }
+  .grid .row { display: grid; grid-template-columns: 84px repeat(3, 1fr); gap: 8px; margin-bottom: 8px; align-items: center; }
+  .grid .rl { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--muted); line-height: 1.2; }
+  .grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; display: block; }
+  .grid .cap { margin-top: 10px; font-size: 17px; color: var(--muted); }
+  svg.wire { position: absolute; left: 0; top: 0; overflow: visible; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="word">GRAPH<br>GRID</div>
+  <div class="headline">Plot <em>any widget</em> on <em>any node</em>,<br>in one queue.</div>
+  <div class="sub">Pick fields in a grid editor. ComfyUI renders every cell and draws a labelled grid.</div>
+  <div class="chips"><div class="chip">Edit grid…</div><div class="chip">+ add field</div></div>
+
+  <svg class="wire" width="1764" height="756">
+    <defs><linearGradient id="wg" x1="0" x2="1"><stop offset="0" stop-color="#67e8f9"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+      <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    <path d="M1204 360 C1228 360, 1232 330, 1252 330" stroke="url(#wg)" stroke-width="5" fill="none" filter="url(#glow)"/>
+  </svg>
+
+  <div class="card node">
+    <div class="title"><span class="dot"></span>Graph Grid</div>
+    <div class="muted">any workflow, any widget</div>
+    <div class="btn">Edit grid…</div>
+    <div class="axis"><b>X</b>3 × prompt: <span>lighthouse · fox · street</span></div>
+    <div class="axis"><b>Y</b>3 × model: <span>base · aesthetic · wai</span></div>
+    <div class="prog"><span>Rendering cell</span><strong>7 / 9</strong></div>
+    <div class="bar"><div></div></div>
+  </div>
+
+  <div class="card grid">
+    <div class="head"><span></span><span>lighthouse</span><span>fox</span><span>street</span></div>
+    <div class="row"><span class="rl">base</span><img src="demo/thumb_r01_c01.jpg"><img src="demo/thumb_r01_c02.jpg"><img src="demo/thumb_r01_c03.jpg"></div>
+    <div class="row"><span class="rl">aesthetic</span><img src="demo/thumb_r02_c01.jpg"><img src="demo/thumb_r02_c02.jpg"><img src="demo/thumb_r02_c03.jpg"></div>
+    <div class="row"><span class="rl">wai</span><img src="demo/thumb_r03_c01.jpg"><img src="demo/thumb_r03_c02.jpg"><img src="demo/thumb_r03_c03.jpg"></div>
+    <div class="cap">3 prompts × 3 models, one queue</div>
+  </div>
+</div>
+</body>
+</html>
