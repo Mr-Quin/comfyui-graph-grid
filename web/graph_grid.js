@@ -268,6 +268,8 @@ const CSS = `
 .gg-table tr.gg-over-after td { box-shadow: inset 0 -2px 0 #2a6fdb; }
 .gg-chip.gg-over-before { box-shadow: -3px 0 0 #2a6fdb; }
 .gg-chip.gg-over-after { box-shadow: 3px 0 0 #2a6fdb; }
+.gg-cell-key { white-space: nowrap; opacity: .8; width: 1%; }
+.gg-cell-val { white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, monospace; font-size: 12px; }
 .gg-preview { display: block; font-size: 11px; opacity: .65; margin-top: 2px; min-height: 14px; }
 .gg-help { font-size: 11px; opacity: .65; }
 .gg-fill { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px; margin-top: 8px;
@@ -406,9 +408,51 @@ function openEditor(plot, configWidget, onSave) {
         total.classList.toggle("gg-warn", n > MANY_CELLS);
     }
 
+    const cellView = h("div", { class: "gg-sec" });
+    const pick = { x: 0, y: 0 };
+
+    // The backend's order: column overrides, then row overrides, {v} being the value before each one.
+    function cellValues() {
+        const out = new Map();
+        for (const key of ["x", "y"]) {
+            const sec = cfg[key];
+            const entry = sec.entries[pick[key]];
+            if (!entry) continue;
+            for (const f of sec.fields) {
+                let v = entry.values?.[f.alias];
+                if (v === "" || v == null) continue;
+                if (v === '""') v = "";
+                const id = `${f.node}|${f.input}`;
+                const before = out.has(id) ? out.get(id).value : widgetInfo(graph, f).current;
+                if (typeof before === "string") v = String(v).replaceAll("{v}", before);
+                out.set(id, { field: f, value: v });
+            }
+        }
+        return [...out.values()];
+    }
+
+    function renderCell() {
+        const select = (key) => {
+            const sec = cfg[key];
+            if (!sec.entries.length) return h("span", { class: "gg-help" }, "none");
+            pick[key] = Math.min(pick[key], sec.entries.length - 1);
+            const sel = h("select", { onchange: (ev) => { pick[key] = Number(ev.target.value); renderCell(); } },
+                sec.entries.map((e, i) => h("option", { value: i }, `${i + 1}: ${entryLabel(sec, e, i) || "(no label)"}`)));
+            sel.value = String(pick[key]);
+            return sel;
+        };
+        const rows = cellValues().map(({ field, value }) => h("tr", {},
+            h("td", { class: "gg-cell-key" }, `${widgetInfo(graph, field).title} › ${field.input}`),
+            h("td", {}, h("div", { class: "gg-cell-val" }, String(value)))));
+        cellView.replaceChildren(
+            h("h4", {}, "Cell preview", h("span", { class: "gg-count" }, "what one cell will use")),
+            h("div", { class: "gg-row" }, "Column", select("x"), "Row", select("y")),
+            rows.length ? h("table", { class: "gg-table" }, rows) : h("div", { class: "gg-help" }, "This cell changes nothing."));
+    }
+
     function render() {
         const scroll = body.scrollTop;
-        const kids = [section("x", "Columns (X)"), section("y", "Rows (Y)")];
+        const kids = [section("x", "Columns (X)"), section("y", "Rows (Y)"), cellView];
         if (loadError) {
             kids.unshift(h("div", { class: "gg-err" }, `The stored grid config could not be read (${loadError}); `
                 + "saving will replace it."));
@@ -416,6 +460,7 @@ function openEditor(plot, configWidget, onSave) {
         if (!candidates.length) {
             kids.unshift(h("div", { class: "gg-err" }, "Connect the image input first; fields come from the nodes that feed it."));
         }
+        renderCell();
         body.replaceChildren(...kids);
         body.scrollTop = scroll;
         refreshTotal();
@@ -445,6 +490,7 @@ function openEditor(plot, configWidget, onSave) {
                 if (previews[i]) previews[i].textContent = "→ " + (entryLabel(sec, e, i) || "(no label)");
             });
             refreshTotal();
+            renderCell();
         };
 
         // fields
@@ -700,12 +746,34 @@ function hideWidget(w) {
 const PROGRESS_DONE_MS = 2500;
 const running = new Set();
 
-function showProgress(el, { done, total, stage }) {
+function progressText({ done, total, stage, columns }) {
+    if (stage === "drawing") return `Drawing the grid (${total} cells)…`;
+    if (stage === "done") return `Done: ${total} cells`;
+    if (!done || !columns) return `Rendering cell ${done} / ${total}`;
+    const row = Math.floor((done - 1) / columns) + 1;
+    const col = ((done - 1) % columns) + 1;
+    return `Rendering cell ${done} / ${total} · row ${row}, column ${col}`;
+}
+
+function showProgress(el, detail) {
+    const { done, total, stage } = detail;
     const pct = total ? Math.min(100, Math.round((done / total) * 100)) : 0;
-    const text = stage === "drawing" ? `Drawing the grid (${total} cells)…`
-        : stage === "done" ? `Done: ${total} cells` : `Rendering cell ${done} / ${total}`;
-    el.replaceChildren(h("div", { class: "gg-mini-line" }, text),
+    el.replaceChildren(h("div", { class: "gg-mini-line" }, progressText(detail)),
         h("div", { class: "gg-bar" }, h("div", { style: `width: ${stage === "cells" ? pct : 100}%` })));
+}
+
+// The summary is part of the node body, which zoomed-out views (and Nodes 2.0's simplified view) leave
+// out, so the count also goes in the title. serialize() keeps the real title in saved workflows.
+function setTitleProgress(node, detail) {
+    if (node.ggTitle === undefined) node.ggTitle = node.title;
+    const tag = detail.stage === "cells" ? `${detail.done}/${detail.total}` : "drawing…";
+    node.title = `${node.ggTitle} · ${tag}`;
+}
+
+function restoreTitle(node) {
+    if (node.ggTitle === undefined) return;
+    node.title = node.ggTitle;
+    node.ggTitle = undefined;
 }
 
 api.addEventListener("graphgrid.progress", ({ detail }) => {
@@ -741,6 +809,7 @@ app.registerExtension({
 
             const mini = h("div", { class: "gg-mini" });
             const refresh = () => {
+                restoreTitle(node);
                 renderSummary(mini, parseConfig(configWidget.value));
                 node.setDirtyCanvas?.(true, true);
             };
@@ -754,7 +823,15 @@ app.registerExtension({
             node.ggRefresh = refresh;
             node.ggProgress = (detail) => {
                 showProgress(mini, detail);
+                if (detail.stage === "done") restoreTitle(node);
+                else setTitleProgress(node, detail);
                 node.setDirtyCanvas?.(true, true);
+            };
+            const serialize = node.serialize;
+            node.serialize = function () {
+                const data = serialize.apply(this, arguments);
+                if (node.ggTitle !== undefined) data.title = node.ggTitle;
+                return data;
             };
             const onConfigure = node.onConfigure;
             node.onConfigure = function () {

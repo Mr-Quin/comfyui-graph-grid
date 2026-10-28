@@ -41,7 +41,7 @@ def guard(route, request):
 
 with sync_playwright() as p:
     browser = p.chromium.launch(channel="msedge", headless=True)
-    ctx = browser.new_context(viewport={"width": 1600, "height": 1000}, device_scale_factor=2, color_scheme="dark")
+    ctx = browser.new_context(viewport={"width": 1600, "height": 1250}, device_scale_factor=2, color_scheme="dark")
     page = ctx.new_page()
     page.route("**/*", guard)
     page.goto(HOST, wait_until="networkidle")
@@ -107,7 +107,7 @@ with sync_playwright() as p:
     page.screenshot(path=str(OUT / "workflow.png"), clip=box)
 
     # 2. The node itself, showing a run in progress.
-    page.evaluate("() => window.__gg.ggProgress?.({ done: 7, total: 9, stage: 'cells' })")
+    page.evaluate("() => window.__gg.ggProgress?.({ done: 7, total: 9, stage: 'cells', columns: 3 })")
     page.wait_for_timeout(400)
     page.screenshot(path=str(OUT / "node.png"), clip=node_box("window.__gg"))
     page.evaluate("() => window.__gg.ggRefresh?.()")
@@ -117,6 +117,9 @@ with sync_playwright() as p:
     page.wait_for_selector("dialog.gg-dialog[open]")
     page.locator("dialog.gg-dialog .gg-sec").nth(1).get_by_role("button", name="Fill…").click()
     page.locator("dialog.gg-dialog .gg-fill input").first.fill("anima-*")
+    preview = page.locator("dialog.gg-dialog .gg-sec").nth(2).locator("select")
+    preview.nth(0).select_option("1")
+    preview.nth(1).select_option("2")
     page.wait_for_timeout(800)
     page.locator("dialog.gg-dialog").screenshot(path=str(OUT / "editor.png"))
     browser.close()

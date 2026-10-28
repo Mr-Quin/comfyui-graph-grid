@@ -254,11 +254,12 @@ def _check_config(cfg):
             raise ValueError(f"Graph Grid: config.{key} has entries but no fields, so every cell would be the same")
 
 
-def _progress(owner, done, total, stage):
+def _progress(owner, done, total, stage, columns=0):
     # Shown on the Graph Grid node by web/graph_grid.js; cached cells send nothing, so counts can jump.
     server = getattr(PromptServer, "instance", None) if PromptServer else None
     if server is not None and owner:
-        server.send_sync("graphgrid.progress", {"node": owner, "done": done, "total": total, "stage": stage}, server.client_id)
+        server.send_sync("graphgrid.progress", {"node": owner, "done": done, "total": total, "stage": stage,
+                                                "columns": columns}, server.client_id)
 
 
 def _class_has_fingerprint(class_type):
@@ -435,7 +436,7 @@ class GraphGrid:
                         "images": img, "filename_prefix": "/".join(p for p in (cells_prefix.strip("/ "), name) if p)}}
                 collect = f"{unique_id}.gg.collect.{r}.{c}"
                 graph[collect] = {"class_type": "GraphGridCollect", "inputs": {
-                    "image": img, "owner": unique_id, "index": r * len(xs) + c + 1, "total": total,
+                    "image": img, "owner": unique_id, "index": r * len(xs) + c + 1, "total": total, "columns": len(xs),
                     **({"previous": [prev, 0]} if prev else {})}}
                 prev = collect
 
@@ -455,6 +456,7 @@ class GraphGridCollect:
             "owner": ("STRING", {"default": ""}),
             "index": ("INT", {"default": 0, "min": 0, "max": 1 << 30}),
             "total": ("INT", {"default": 0, "min": 0, "max": 1 << 30}),
+            "columns": ("INT", {"default": 0, "min": 0, "max": 1 << 30}),
         }}
 
     DEV_ONLY = True
@@ -462,8 +464,8 @@ class GraphGridCollect:
     FUNCTION = "collect"
     CATEGORY = "Graph Grid/internal"
 
-    def collect(self, image, previous=None, owner="", index=0, total=0):
-        _progress(owner, index, total, "cells")
+    def collect(self, image, previous=None, owner="", index=0, total=0, columns=0):
+        _progress(owner, index, total, "cells", columns)
         return ((previous or []) + [image],)
 
 

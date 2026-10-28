@@ -39,10 +39,11 @@ Tested on ComfyUI 0.41.0. Labels need Pillow 10.1 or newer, which current ComfyU
    - **+ column / + row** adds an entry. A blank cell leaves the widget unchanged.
    - **Fill…** generates entries: a number range, a wildcard over a dropdown's options (`*epoch[468]*`), or one value per line. *Append*, *Prepend*, or *Cross with existing* (every existing entry times every value).
    - Drag the ⠿ handle to reorder fields and entries.
+   - **Cell preview** at the bottom: pick a column and a row to see the exact values that cell will use, with `{v}` filled in.
 
 <p align="center"><img src="docs/editor.png" width="880" alt="The grid editor: prompts as columns, models as rows, Fill open on the rows"></p>
 
-3. Queue. The node counts the cells as they finish, and the grid appears in the Save Image or Preview Image node.
+3. Queue. The node counts the cells as they finish (also in its title, so you can follow it zoomed out), and the grid appears in the Save Image or Preview Image node.
 
 <p align="center"><img src="docs/node.png" width="360" alt="Graph Grid node during a run"></p>
 
