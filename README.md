@@ -40,6 +40,7 @@ Tested on ComfyUI 0.41.0. Labels need Pillow 10.1 or newer, which current ComfyU
    - **Fill…** generates entries: a number range, a wildcard over a dropdown's options (`*epoch[468]*`), or one value per line. *Append*, *Prepend*, or *Cross with existing* (every existing entry times every value).
    - Drag the ⠿ handle to reorder fields and entries.
    - **Cell preview** at the bottom: pick a column and a row to see the exact values that cell will use, with `{v}` filled in.
+   - **JSON…** shows the whole grid as JSON to copy, or takes a pasted one. Fields point at node ids, so a grid pasted into another workflow may need its fields re-picked; the editor marks those in red.
 
 <p align="center"><img src="docs/editor.png" width="880" alt="The grid editor: prompts as columns, models as rows, Fill open on the rows"></p>
 

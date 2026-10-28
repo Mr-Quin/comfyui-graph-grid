@@ -268,6 +268,7 @@ const CSS = `
 .gg-table tr.gg-over-after td { box-shadow: inset 0 -2px 0 #2a6fdb; }
 .gg-chip.gg-over-before { box-shadow: -3px 0 0 #2a6fdb; }
 .gg-chip.gg-over-after { box-shadow: 3px 0 0 #2a6fdb; }
+.gg-dialog textarea.gg-json { width: 100%; min-height: 220px; font-family: ui-monospace, monospace; font-size: 12px; }
 .gg-cell-key { white-space: nowrap; opacity: .8; width: 1%; }
 .gg-cell-val { white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, monospace; font-size: 12px; }
 .gg-preview { display: block; font-size: 11px; opacity: .65; margin-top: 2px; min-height: 14px; }
@@ -450,9 +451,58 @@ function openEditor(plot, configWidget, onSave) {
             rows.length ? h("table", { class: "gg-table" }, rows) : h("div", { class: "gg-help" }, "This cell changes nothing."));
     }
 
+    let jsonOpen = false;
+    let jsonNote = "";
+
+    function copyText(text, textarea, note) {
+        const fallback = () => {
+            // Pages served over plain http have no clipboard API.
+            textarea.focus();
+            textarea.select();
+            note.textContent = document.execCommand("copy") ? "Copied." : "Select the text and copy it with Ctrl+C.";
+        };
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(text).then(() => { note.textContent = "Copied."; }, fallback);
+        } else {
+            fallback();
+        }
+    }
+
+    function jsonPanel() {
+        const text = JSON.stringify(cfg, null, 2);
+        const ta = h("textarea", { class: "gg-json", spellcheck: "false" }, text);
+        const note = h("span", { class: "gg-help" }, jsonNote);
+        const apply = () => {
+            let c;
+            try {
+                c = JSON.parse(ta.value);
+                if (!c || typeof c !== "object" || Array.isArray(c)) throw new Error("expected an object with x and y");
+            } catch (e) {
+                note.textContent = `Not valid: ${e.message}`;
+                note.classList.add("gg-err");
+                return;
+            }
+            cfg.x = normalizeSection(c.x);
+            cfg.y = normalizeSection(c.y);
+            const missing = [...cfg.x.fields, ...cfg.y.fields].filter((f) => !nodeByPath(graph, f.node)).length;
+            jsonNote = missing ? `Applied. ${missing} field(s) point at nodes this workflow doesn't have; they're shown in red.`
+                : "Applied.";
+            render();
+        };
+        return h("div", { class: "gg-sec" },
+            h("h4", {}, "Grid as JSON", h("span", { class: "gg-count" }, "copy it, or paste one and apply")),
+            ta,
+            h("div", { class: "gg-row", style: "margin-top: 8px" },
+                h("button", { onclick: () => copyText(ta.value, ta, note) }, "Copy"),
+                h("button", { onclick: apply }, "Apply"),
+                h("button", { onclick: () => { jsonOpen = false; jsonNote = ""; render(); } }, "Close"),
+                note));
+    }
+
     function render() {
         const scroll = body.scrollTop;
         const kids = [section("x", "Columns (X)"), section("y", "Rows (Y)"), cellView];
+        if (jsonOpen) kids.unshift(jsonPanel());
         if (loadError) {
             kids.unshift(h("div", { class: "gg-err" }, `The stored grid config could not be read (${loadError}); `
                 + "saving will replace it."));
@@ -719,6 +769,8 @@ function openEditor(plot, configWidget, onSave) {
 
     dialog.append(h("div", { class: "gg-wrap" },
         h("div", { class: "gg-head" }, h("h3", {}, "Graph Grid"),
+            h("button", { title: "Copy or paste the whole grid as JSON",
+                onclick: () => { jsonOpen = !jsonOpen; jsonNote = ""; render(); body.scrollTop = 0; } }, "JSON…"),
             h("button", { title: "Swap rows and columns", onclick: () => { [cfg.x, cfg.y] = [cfg.y, cfg.x]; render(); } }, "⇄ swap X/Y"),
             h("button", { class: "gg-icon", title: "Close without saving", onclick: cancel }, "✕")),
         body,

@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-graph-grid"
 description = "XY plots for any ComfyUI workflow: vary any widget on any node from a grid editor and render a labelled grid in one queue."
-version = "0.1.1"
+version = "0.1.2"
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.10"
